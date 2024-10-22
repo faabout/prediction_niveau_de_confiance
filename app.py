@@ -14,19 +14,6 @@ def load_data():
     
     return df
 
-# Fonction pour charger les encodeurs et scaler (avec mise en cache)
-@st.cache_resource
-def load_encoders_scaler():
-    with open('encoders_scaler.pkl', 'rb') as f:
-        encoders_scaler = pickle.load(f)
-    return encoders_scaler
-
-# Fonction pour charger le modèle (avec mise en cache)
-@st.cache_resource
-def load_model():
-    with open('random_forest_model.pkl', 'rb') as f:
-        model = pickle.load(f)
-    return model
 
 # Chargement des données, encodeurs/scaler et modèle
 df = load_data()
@@ -48,8 +35,8 @@ df.rename(columns={
    'Nombre et durée de mandat présidentiel':'nombre_duree_mandat',
    'Niveau de Confiance' : 'niveau_de_confiance'
 } , inplace = True)
-encoders_scaler = load_encoders_scaler()
-model = load_model()
+#encoders_scaler = load_encoders_scaler()
+#model = load_model()
 
 # Convertir toutes les valeurs en minuscules avant l'encodage
 categorical_columns = [col for col in df.columns if df[col].dtype == 'object']
@@ -75,8 +62,31 @@ encoders = [encoder0, encoder1, encoder2,encoder3, encoder4, encoder5, encoder6,
 for i in range(len(categorical_columns)):
   encoders[i].fit(df_encoded[categorical_columns[i]]) # le modèle prend le temps de reconnaitre les classes
   df_encoded[categorical_columns[i]] = encoders[i].transform(df_encoded[categorical_columns[i]]) # le modèle encode les variables
-scaler = encoders_scaler['scaler']
+#scaler = encoders_scaler['scaler']
 
+# Séparaer les variables d'entrée et la variable de sortie
+X = df_encoded.drop('niveau_de_confiance', axis= 1)
+# La vairable de sortie
+y = df_encoded['niveau_de_confiance'].values
+
+# importer StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, normalize
+# Instancier StandardScaler
+scaler = StandardScaler()
+scaler.fit(X) # calcul de la moyenne et de l'écart type
+X = scaler.transform(X) # normalisation
+# Spliter les données
+from sklearn.model_selection import train_test_split
+
+X_train,  X_test,  y_train,  y_test = train_test_split(X, y, test_size=0.2, random_state=808)
+X_val, X_test, y_val, y_test = train_test_split(X_test, y_test, test_size = 0.5, random_state = 808)
+
+from sklearn.ensemble import RandomForestClassifier
+
+# Entrainer le modèle en utilisant les paramètres optimaux
+Rfc= RandomForestClassifier(criterion='entropy', max_depth=14)
+# entrainer le modèle
+Rfc.fit(X_train, y_train)
 # Interface Streamlit pour les saisies utilisateur
 st.title('Prédiction du Niveau de Confance')
 
@@ -114,7 +124,7 @@ input_data_scaled = scaler.transform(input_data)
 
 # Bouton pour lancer la prédiction
 if st.button('Prédire'):
-    prediction = model.predict(input_data_scaled)
+    prediction = Rfc.predict(input_data_scaled)
     prediction_decoded = encoder10.inverse_transform([prediction[0]])
 
     # Retourner la prédiction
