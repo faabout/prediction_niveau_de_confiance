@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 
-
 # Fonction pour charger les données (avec mise en cache)
 @st.cache_data
 def load_data():
@@ -33,7 +32,7 @@ df.rename(columns={
    'Ecriture de la Constitution': 'ecriture_constitution',
    'Nombre et durée de mandat présidentiel':'nombre_duree_mandat',
    'Niveau de Confiance' : 'niveau_de_confiance'
-} , inplace = True)
+    } , inplace = True)
 #encoders_scaler = load_encoders_scaler()
 #model = load_model()
 
@@ -84,7 +83,9 @@ from sklearn.ensemble import RandomForestClassifier
 
 # Entrainer le modèle en utilisant les paramètres optimaux
 Rfc= RandomForestClassifier(criterion='entropy', max_depth=14)
+
 # entrainer le modèle
+
 Rfc.fit(X_train, y_train)
 # Interface Streamlit pour les saisies utilisateur
 st.title('Prédiction du Niveau de Confance')
